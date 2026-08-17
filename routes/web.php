@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\MonitoringController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
@@ -7,6 +9,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Halaman publik & autentikasi
@@ -61,6 +64,13 @@ Route::middleware('auth')->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
     // Dashboard & monitoring admin
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Monitoring gerobak karyawan (read-only): bawa apa / kembalikan apa
+    Route::get('/gerobak', [MonitoringController::class, 'index'])->name('gerobak.index');
+    Route::get('/gerobak/{gerobak}', [MonitoringController::class, 'show'])->name('gerobak.show');
+
+    // Log aktivitas (read-only, tanpa CRUD)
+    Route::get('/log-aktivitas', [ActivityLogController::class, 'index'])->name('log.index');
 
     // CRUD produk
     Route::get('/produk', [AdminProductController::class, 'index'])->name('produk.index');

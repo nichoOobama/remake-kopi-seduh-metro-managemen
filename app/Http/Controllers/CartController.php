@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Commission;
+use App\Models\CommissionItem;
 use App\Models\Product;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -76,7 +78,7 @@ class CartController extends Controller
 
                 if ($produk->stok < $qty) {
                     throw ValidationException::withMessages([
-                        'qty.' . $productId => "Stok {$produk->name} tersisa {$produk->stok}.",
+                        'qty.'.$productId => "Stok {$produk->name} tersisa {$produk->stok}.",
                     ]);
                 }
 
@@ -94,6 +96,12 @@ class CartController extends Controller
                 // Produk keluar dari gudang
                 $produk->decrement('stok', $qty);
             }
+
+            ActivityLogger::log(
+                $user->id,
+                'ambil_gerobak',
+                "Mengambil gerobak: {$cart->items->count()} jenis produk, {$cart->items->sum('qty_ambil')} bungkus."
+            );
 
             return redirect()->route('dashboard')
                 ->with('success', 'Gerobak berhasil diambil. Selamat berjualan!');
@@ -140,13 +148,14 @@ class CartController extends Controller
         return DB::transaction(function () use ($validated, $gerobak) {
             $totalPenjualan = 0;
             $totalModal = 0;
+            $persen = (float) config('komisi.persentase_bagi_hasil'); // 0.20
 
             foreach ($gerobak->items as $item) {
                 $sisa = (int) ($validated['sisa'][$item->id] ?? 0);
 
                 if ($sisa > $item->qty_ambil) {
                     throw ValidationException::withMessages([
-                        'sisa.' . $item->id => 'Sisa tidak boleh melebihi jumlah diambil (' . $item->qty_ambil . ').',
+                        'sisa.'.$item->id => 'Sisa tidak boleh melebihi jumlah diambil ('.$item->qty_ambil.').',
                     ]);
                 }
 
@@ -169,10 +178,10 @@ class CartController extends Controller
             }
 
             $totalUntung = $totalPenjualan - $totalModal;
-            $upah = round($totalUntung * 0.20, 2); // bagi hasil 20% untuk karyawan
+            $upah = round($totalUntung * $persen, 2); // bagi hasil untuk karyawan
 
             // Simpan komisi (status pending -> menunggu diambil karyawan)
-            Commission::create([
+            $komisi = Commission::create([
                 'cart_id' => $gerobak->id,
                 'user_id' => $gerobak->user_id,
                 'total_penjualan' => $totalPenjualan,
@@ -182,14 +191,36 @@ class CartController extends Controller
                 'status' => 'pending',
             ]);
 
+            // Simpan rincian per produk (snapshot) untuk tampilan transparan
+            foreach ($gerobak->items as $item) {
+                $subPenjualan = $item->subtotalPenjualan();
+                $subModal = $item->subtotalModal();
+                $keuntungan = $subPenjualan - $subModal;
+
+                CommissionItem::create([
+                    'commission_id' => $komisi->id,
+                    'product_id' => $item->product_id,
+                    'product_name' => $item->product->name,
+                    'qty_ambil' => $item->qty_ambil,
+                    'qty_sisa' => $item->qty_sisa,
+                    'qty_terjual' => $item->qty_terjual,
+                    'harga_modal' => $item->harga_modal,
+                    'harga_jual' => $item->harga_jual,
+                    'subtotal_penjualan' => $subPenjualan,
+                    'subtotal_modal' => $subModal,
+                    'keuntungan' => $keuntungan,
+                    'upah_item' => round($keuntungan * $persen, 2),
+                ]);
+            }
+
             $gerobak->update([
                 'status' => 'returned',
                 'returned_at' => now(),
             ]);
 
             return redirect()->route('komisi.index')
-                ->with('success', 'Gerobak dikembalikan. Keuntungan: Rp' . number_format($totalUntung, 0, ',', '.')
-                    . ' — upah 20% Anda: Rp' . number_format($upah, 0, ',', '.') . '.');
+                ->with('success', 'Gerobak dikembalikan. Keuntungan: Rp'.number_format($totalUntung, 0, ',', '.')
+                    .' — upah '.($persen * 100).'% Anda: Rp'.number_format($upah, 0, ',', '.').'.');
         });
     }
 

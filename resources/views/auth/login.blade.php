@@ -43,7 +43,7 @@
                 </form>
 
                 <p class="text-center text-muted small mt-4 mb-0">
-                    Belum punya akun? <a href="{{ route('register') }}">Register sebagai Employee</a>
+                    Belum punya akun? <a href="{{ route('register') }}">Register</a>
                 </p>
             </div>
         </div>

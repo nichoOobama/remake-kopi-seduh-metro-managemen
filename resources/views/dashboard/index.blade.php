@@ -39,6 +39,43 @@
         </div>
     @endif
 
+    {{-- Ringkasan isi gerobak aktif --}}
+    @if ($gerobakAktif && $gerobakAktif->items->isNotEmpty())
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white fw-bold"><i class="bi bi-cart3"></i> Isi Gerobak Anda</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th class="text-center">Jumlah Dibawa</th>
+                                <th class="text-end">Harga Jual</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($gerobakAktif->items as $item)
+                                <tr>
+                                    <td class="fw-semibold">{{ $item->product->name }}</td>
+                                    <td class="text-center">{{ $item->qty_ambil }}</td>
+                                    <td class="text-end">Rp{{ number_format($item->harga_jual, 0, ',', '.') }}</td>
+                                    <td class="text-end">Rp{{ number_format($item->qty_ambil * $item->harga_jual, 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-semibold">Total Nilai Jual</td>
+                                <td class="text-end fw-bold">Rp{{ number_format($gerobakAktif->items->sum(fn ($i) => $i->qty_ambil * $i->harga_jual), 0, ',', '.') }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Informasi komisi terakhir --}}
     @if ($komisiTerakhir)
         <div class="alert alert-success d-flex justify-content-between align-items-center">

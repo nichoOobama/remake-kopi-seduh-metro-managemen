@@ -32,6 +32,11 @@
 
                 @if (auth()->user()->isAdmin())
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.gerobak.*') ? 'active' : '' }}" href="{{ route('admin.gerobak.index') }}">
+                            <i class="bi bi-cart-check"></i> Monitoring Gerobak
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.produk.*') ? 'active' : '' }}" href="{{ route('admin.produk.index') }}">
                             <i class="bi bi-box-seam"></i> Produk
                         </a>
@@ -39,6 +44,11 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">
                             <i class="bi bi-people"></i> Pengguna
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('admin.log.*') ? 'active' : '' }}" href="{{ route('admin.log.index') }}">
+                            <i class="bi bi-clock-history"></i> Log Aktivitas
                         </a>
                     </li>
                 @else

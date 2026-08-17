@@ -19,10 +19,11 @@ class CommissionController extends Controller
         $user = $request->user();
 
         return view('commissions.index', [
-            'komisi' => Commission::with('cart')
+            'komisi' => Commission::with(['cart', 'items'])
                 ->where('user_id', $user->id)
                 ->latest()
                 ->get(),
+            'persenBagiHasil' => (float) config('komisi.persentase_bagi_hasil'),
             'totalPending' => (float) Commission::where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->sum('upah_20persen'),
@@ -52,6 +53,6 @@ class CommissionController extends Controller
         });
 
         return redirect()->route('komisi.index')
-            ->with('success', 'Penghasilan Rp' . number_format($komisi->upah_20persen, 0, ',', '.') . ' berhasil diambil dan masuk ke saldo Anda.');
+            ->with('success', 'Penghasilan Rp'.number_format($komisi->upah_20persen, 0, ',', '.').' berhasil diambil dan masuk ke saldo Anda.');
     }
 }

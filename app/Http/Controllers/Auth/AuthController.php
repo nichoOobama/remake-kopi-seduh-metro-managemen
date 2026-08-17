@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * Autentikasi custom (tanpa Breeze).
@@ -61,10 +61,12 @@ class AuthController extends Controller
         // Role selalu employee untuk pendaftaran publik
         $user = User::create(array_merge($validated, ['role' => 'employee']));
 
+        ActivityLogger::log($user->id, 'register', 'Mendaftarkan akun baru.');
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')->with('success', 'Registrasi berhasil. Selamat datang, ' . $user->name . '!');
+        return redirect()->route('dashboard')->with('success', 'Registrasi berhasil. Selamat datang, '.$user->name.'!');
     }
 
     /** Proses logout. */

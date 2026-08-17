@@ -1,58 +1,99 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# CoffeePaste — Employee Advocacy Commerce
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi penjualan keliling (gerobak) dengan sistem **bagi hasil transparan** untuk karyawan
+dan **monitoring + log aktivitas** untuk admin.
 
-## About Laravel
+- **Backend**: Laravel 13 (PHP 8.3)
+- **Frontend**: Bootstrap 5 + Bootstrap Icons (CDN) + Chart.js (CDN)
+- **Database**: MySQL
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Fitur
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Karyawan (Employee)
+- Ambil gerobak: pilih produk & jumlah (1 gerobak aktif maksimal, stok gudang berkurang otomatis)
+- Kembalikan gerobak: input sisa retur, **live preview estimasi keuntungan & bagian 20%**
+- **Bagi hasil transparan**: riwayat komisi lengkap dengan rincian per produk (diambil / sisa / terjual,
+  harga jual, harga modal, keuntungan, bagian) + rumus perhitungan
+- Ambil penghasilan: komisi pending → saldo (balance)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Admin
+- Dashboard: kartu statistik + **line chart penjualan per karyawan 7 hari terakhir**
+  (multi-line, filter per karyawan via dropdown)
+- **Monitoring gerobak**: siapa membawa apa & berapa jumlahnya (status aktif),
+  siapa mengembalikan apa & berapa sisa retur (status dikembalikan), lengkap dengan detail & hasil bagi
+- CRUD produk & pengguna
+- **Log aktivitas (read-only)**: seluruh aktivitas user (login, logout, ambil/retur gerobak,
+  ambil komisi, CRUD produk/user). Admin **tidak dapat** membuat/mengubah/menghapus log.
 
-## Learning Laravel
+## Akun Awal (Seeder)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@kopiseduh.test` | `password123` |
+| Karyawan | `karyawan@kopiseduh.test` | `password123` |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalasi
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+# atur koneksi MySQL di .env, lalu:
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Persentase Bagi Hasil
 
-## Contributing
+Nilai persentase ada di `config/komisi.php` → `persentase_bagi_hasil` (default `0.20` = 20%).
+Rincian komisi lama tidak terpengaruh karena nilai disimpan sebagai snapshot di `commission_items`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Dokumentasi
 
-## Code of Conduct
+- [ERD & Skema Basis Data](docs/ERD.md)
+- [Alur Halaman & Navigasi](docs/ALUR.md)
+- [Struktur Folder](docs/STRUKTUR.md)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Struktur Folder Singkat
 
-## Security Vulnerabilities
+```
+app/
+├── Http/Controllers/
+│   ├── Auth/AuthController.php        # login, register, logout
+│   ├── Admin/                         # area admin
+│   │   ├── ActivityLogController.php  # log aktivitas (read-only)
+│   │   ├── MonitoringController.php   # monitoring gerobak
+│   │   ├── ProductController.php      # CRUD produk
+│   │   └── UserController.php         # kelola pengguna
+│   ├── CartController.php             # ambil / kembalikan gerobak + bagi hasil
+│   ├── CommissionController.php       # riwayat komisi & ambil penghasilan
+│   └── DashboardController.php        # dashboard per role + data chart 7 hari
+├── Models/                            # User, Product, Cart, CartItem, Commission, CommissionItem, ActivityLog
+├── Observers/                         # pencatat log otomatis (Product, User, Cart, Commission)
+├── Support/ActivityLogger.php         # helper pencatatan log
+└── Providers/AppServiceProvider.php   # register observer + event login/logout
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+config/komisi.php                      # persentase bagi hasil
 
-## License
+database/migrations/                   # skema tabel (lihat docs/ERD.md)
+database/seeders/                      # akun awal + produk contoh
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+resources/views/
+├── auth/                              # login, register
+├── layouts/app.blade.php              # navbar per role
+├── dashboard/index.blade.php          # dashboard karyawan + isi gerobak
+├── carts/ambil.blade.php              # form ambil gerobak
+├── carts/retur.blade.php              # form retur + live preview
+├── commissions/index.blade.php        # komisi transparan (accordion rincian)
+└── admin/
+    ├── dashboard.blade.php            # statistik + line chart 7 hari
+    ├── carts/index.blade.php          # monitoring gerobak (tab aktif/dikembalikan)
+    ├── carts/show.blade.php           # detail gerobak
+    ├── activity/index.blade.php       # log aktivitas (read-only)
+    ├── products/                      # CRUD produk
+    └── users/                         # kelola pengguna
+
+docs/                                  # ERD.md, ALUR.md, STRUKTUR.md
+routes/web.php                         # seluruh route aplikasi
+```

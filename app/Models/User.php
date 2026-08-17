@@ -42,6 +42,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Log aktivitas user.
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

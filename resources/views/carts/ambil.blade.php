@@ -13,7 +13,7 @@
 
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white fw-bold">
-                Pilih produk & jumlah (sisa stok berkurang otomatis di gudang)
+                Pilih produk & jumlah ( sisa stok berkurang otomatis ketika diambil )
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
